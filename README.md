@@ -32,16 +32,22 @@ API backend do **GuideAut** usando **Spring Boot 3.5.x**, **Java 21**, **JWT** p
 
 ---
 
-## ⚙️ Pré-requisitos
+## Pré-requisitos
 - **Java 21** (Temurin/Adoptium recomendado)
-- *(Opcional)* **cURL** para smoke tests
+- **Maven 3.9+**
+
+> Observação: o projeto também inclui o Maven Wrapper (`mvnw`).  
+> Se preferir usar o Maven instalado no sistema, troque `./mvnw` por `mvn` nos comandos.
 
 ---
 
-## ▶️ Como rodar (dev)
+## Como rodar (dev)
 
 ```bash
-# Subir a aplicação
+# Com Maven instalado:
+mvn clean spring-boot:run
+
+# OU usando o Maven Wrapper:
 ./mvnw clean spring-boot:run
 ```
 
@@ -213,3 +219,6 @@ chore: atualizar dependências do jjwt
 - [ ] Atualizou README/Swagger se necessário  
 - [ ] PR com descrição e cenários de teste  
 
+---
+
+#### Desenvolvido pela turma de Engenharia de Software da Universidade do Estado do Amazonas (UEA), no período 2025/2, sob orientação da Professora Áurea Hiléia da Silva Melo.
