@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +23,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -29,28 +32,36 @@ public class SecurityConfig {
   @Bean
   SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-        // >>>>>> AQUI ligamos o CORS usando o bean corsConfigurationSource() <<<<<<
+        // CORS ligado usando o bean corsConfigurationSource()
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
         .headers(h -> h.frameOptions(f -> f.disable())) // H2 console
         // Sem sessão HTTP: só JWT mesmo
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+            // ---------- Rotas públicas ----------
             .requestMatchers(
                 "/auth/**",
                 "/v3/api-docs/**",
                 "/swagger-ui/**",
                 "/swagger-ui.html",
-                "/h2-console/**"
+                "/h2-console/**",
+                "/files/**"
             ).permitAll()
+            // criação de usuário pública
+            .requestMatchers(HttpMethod.POST, "/users").permitAll()
+            // ---------- Rotas com papéis (opcional) ----------
+            .requestMatchers("/admin/**").hasRole("ADMIN")
+            // ---------- Demais rotas precisam de autenticação ----------
             .anyRequest().authenticated()
         )
+        // Filtro de JWT antes do filtro padrão de credenciais
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
 
-  // Bean do encoder (tipo concreto BCrypt para casar com o que o AuthService injeta)
+  // Encoder (BCrypt) — deve casar com o que o AuthService usa
   @Bean
   public BCryptPasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
@@ -71,7 +82,8 @@ public class SecurityConfig {
     ));
     cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     cfg.setAllowedHeaders(List.of("*"));
-    cfg.setExposedHeaders(List.of("Authorization", "Content-Type"));
+    // Exponha cabeçalhos úteis ao front
+    cfg.setExposedHeaders(List.of("Authorization", "Content-Type", "Location"));
     cfg.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
