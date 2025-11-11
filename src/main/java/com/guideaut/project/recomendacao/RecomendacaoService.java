@@ -19,7 +19,6 @@ public class RecomendacaoService {
      * Lista todas as recomendações.
      */
     public List<Recomendacao> listarTodas() {
-        // Simplesmente retorna todas
         return recomendacaoRepo.findAll();
     }
 
@@ -31,9 +30,9 @@ public class RecomendacaoService {
         Recomendacao nova = new Recomendacao();
         nova.setTitulo(request.titulo());
         nova.setDescricao(request.descricao());
+        nova.setJustificativa(request.justificativa()); 
         nova.setCategoria(request.categoria());
         nova.setReferencia(request.referencia());
-        
         
         return recomendacaoRepo.save(nova);
     }

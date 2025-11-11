@@ -20,6 +20,9 @@ public class Recomendacao {
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String descricao;
+    
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String justificativa;
 
     @Column(nullable = false)
     private String categoria;
@@ -58,6 +61,14 @@ public class Recomendacao {
 
     public void setDescricao(String descricao) {
         this.descricao = descricao;
+    }
+
+    public String getJustificativa() {
+        return justificativa;
+    }
+
+    public void setJustificativa(String justificativa) {
+        this.justificativa = justificativa;
     }
 
     public String getCategoria() {
