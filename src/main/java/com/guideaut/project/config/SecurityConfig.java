@@ -82,7 +82,6 @@ public class SecurityConfig {
     ));
     cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     cfg.setAllowedHeaders(List.of("*"));
-    // Exponha cabeçalhos úteis ao front
     cfg.setExposedHeaders(List.of("Authorization", "Content-Type", "Location"));
     cfg.setAllowCredentials(true);
 

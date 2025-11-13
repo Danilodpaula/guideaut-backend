@@ -1,11 +1,12 @@
-// src/main/java/com/guideaut/project/recomendacao/RecomendacaoController.java
 package com.guideaut.project.recomendacao;
 
+import com.guideaut.project.recomendacao.dto.AvaliacaoRequest;
 import com.guideaut.project.recomendacao.dto.RecomendacaoRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication; 
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -43,7 +44,7 @@ public class RecomendacaoController {
             @RequestBody RecomendacaoRequest request
     ) {
         Recomendacao atualizada = recomendacaoService.atualizar(id, request);
-        return ResponseEntity.ok(atualizada); 
+        return ResponseEntity.ok(atualizada);
     }
 
     @Operation(summary = "Deleta uma recomendação")
@@ -52,7 +53,18 @@ public class RecomendacaoController {
             @PathVariable UUID id
     ) {
         recomendacaoService.deletar(id);
-        return ResponseEntity.noContent().build(); 
+        return ResponseEntity.noContent().build();
     }
 
-} 
+
+    @Operation(summary = "Adiciona ou atualiza uma avaliação (1-5 estrelas)")
+    @PostMapping("/{id}/avaliar")
+    public ResponseEntity<Recomendacao> avaliarRecomendacao(
+            @PathVariable UUID id,
+            @RequestBody AvaliacaoRequest request,
+            Authentication authentication
+    ) {
+        Recomendacao atualizada = recomendacaoService.avaliar(id, request, authentication.getName());
+        return ResponseEntity.ok(atualizada);
+    }
+}
