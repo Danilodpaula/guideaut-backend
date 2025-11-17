@@ -37,6 +37,14 @@ public class Usuario {
     @Column(name = "avatar_path")
     private String avatarPath;
 
+    /** Nome de exibição (opcional, diferente de "nome" completo). */
+    @Column(name = "display_name")
+    private String displayName;
+
+    /** Biografia curta do usuário (até 500 caracteres). */
+    @Column(name = "bio", length = 500)
+    private String bio;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "usuario_papel",
@@ -111,6 +119,20 @@ public class Usuario {
     }
     public void setAvatarPath(String avatarPath) {
         this.avatarPath = avatarPath;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+    public void setBio(String bio) {
+        this.bio = bio;
     }
 
     public Set<Papel> getPapeis() {
