@@ -4,6 +4,8 @@ import com.guideaut.project.audit.AuditService;
 import com.guideaut.project.audit.AuditSeverity;
 import com.guideaut.project.recomendacao.dto.AvaliacaoRequest;
 import com.guideaut.project.recomendacao.dto.RecomendacaoRequest;
+import com.guideaut.project.recomendacao.dto.ComentarioRequest; 
+import com.guideaut.project.recomendacao.dto.ComentarioResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +40,6 @@ public class RecomendacaoController {
     ) {
         List<Recomendacao> todas = recomendacaoService.listarTodas();
 
-        // Audit
         auditService.log(
                 "RECOMENDACAO_LIST_ALL",
                 authentication != null ? authentication.getName() : "ANONYMOUS",
@@ -59,7 +60,6 @@ public class RecomendacaoController {
     ) {
         Recomendacao criada = recomendacaoService.criar(requestBody);
 
-        // Audit
         auditService.log(
                 "RECOMENDACAO_CREATED",
                 authentication != null ? authentication.getName() : "SYSTEM",
@@ -84,7 +84,6 @@ public class RecomendacaoController {
     ) {
         Recomendacao atualizada = recomendacaoService.atualizar(id, requestBody);
 
-        // Audit
         auditService.log(
                 "RECOMENDACAO_UPDATED",
                 authentication != null ? authentication.getName() : "SYSTEM",
@@ -108,7 +107,6 @@ public class RecomendacaoController {
     ) {
         recomendacaoService.deletar(id);
 
-        // Audit
         auditService.log(
                 "RECOMENDACAO_DELETED",
                 authentication != null ? authentication.getName() : "SYSTEM",
@@ -131,7 +129,6 @@ public class RecomendacaoController {
         String email = authentication.getName();
         Recomendacao atualizada = recomendacaoService.avaliar(id, requestBody, email);
 
-        // Audit
         auditService.log(
                 "RECOMENDACAO_AVALIADA",
                 email,
@@ -144,5 +141,40 @@ public class RecomendacaoController {
         );
 
         return ResponseEntity.ok(atualizada);
+    }
+
+    @Operation(summary = "Lista comentários de uma recomendação")
+    @GetMapping("/{id}/comentarios")
+    public ResponseEntity<List<ComentarioResponse>> listarComentarios(@PathVariable UUID id) {
+        List<ComentarioResponse> response = recomendacaoService.listarComentariosResponse(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Adiciona um comentário a uma recomendação")
+    @PostMapping("/{id}/comentarios")
+    public ResponseEntity<ComentarioResponse> adicionarComentario(
+            @PathVariable UUID id,
+            @RequestBody ComentarioRequest requestBody,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        String email = authentication.getName();
+        RecomendacaoComentario salvo = recomendacaoService.comentar(id, requestBody.texto(), email);
+
+        auditService.log(
+                "RECOMENDACAO_COMENTADA",
+                email,
+                request,
+                Map.of("recomendacaoId", id),
+                AuditSeverity.INFO
+        );
+
+        return ResponseEntity.ok(new ComentarioResponse(
+            salvo.getId(),
+            salvo.getTexto(),
+            salvo.getUsuario().getNome(),
+            salvo.getUsuario().getAvatarPath() != null ? "/files/" + salvo.getUsuario().getAvatarPath() : null,
+            salvo.getCriadoEm()
+        ));
     }
 }

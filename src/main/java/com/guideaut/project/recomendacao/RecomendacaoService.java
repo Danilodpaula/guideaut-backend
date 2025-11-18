@@ -1,12 +1,15 @@
 package com.guideaut.project.recomendacao;
 
-import com.guideaut.project.identity.Usuario; 
+import com.guideaut.project.identity.Usuario;
 import com.guideaut.project.recomendacao.dto.AvaliacaoRequest;
 import com.guideaut.project.recomendacao.dto.RecomendacaoRequest;
-import com.guideaut.project.repo.RecomendacaoAvaliacaoRepo; 
+import com.guideaut.project.recomendacao.dto.ComentarioResponse;
+import com.guideaut.project.repo.RecomendacaoAvaliacaoRepo;
+import com.guideaut.project.repo.RecomendacaoComentarioRepo;
 import com.guideaut.project.repo.RecomendacaoRepo;
 import com.guideaut.project.repo.UsuarioRepo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import java.util.List;
@@ -18,19 +21,22 @@ public class RecomendacaoService {
 
     private final RecomendacaoRepo recomendacaoRepo;
     private final UsuarioRepo usuarioRepo;
-    private final RecomendacaoAvaliacaoRepo avaliacaoRepo; 
+    private final RecomendacaoAvaliacaoRepo avaliacaoRepo;
+    private final RecomendacaoComentarioRepo comentarioRepo;
 
     public RecomendacaoService(
-            RecomendacaoRepo recomendacaoRepo, 
-            UsuarioRepo usuarioRepo, 
-            RecomendacaoAvaliacaoRepo avaliacaoRepo
+            RecomendacaoRepo recomendacaoRepo,
+            UsuarioRepo usuarioRepo,
+            RecomendacaoAvaliacaoRepo avaliacaoRepo,
+            RecomendacaoComentarioRepo comentarioRepo
     ) {
         this.recomendacaoRepo = recomendacaoRepo;
         this.usuarioRepo = usuarioRepo;
         this.avaliacaoRepo = avaliacaoRepo;
+        this.comentarioRepo = comentarioRepo;
     }
 
-     public List<Recomendacao> listarTodas() {
+    public List<Recomendacao> listarTodas() {
         return recomendacaoRepo.findAll();
     }
 
@@ -41,20 +47,20 @@ public class RecomendacaoService {
         nova.setJustificativa(request.justificativa());
         nova.setCategoria(request.categoria());
         nova.setReferencia(request.referencia());
-        
+
         return recomendacaoRepo.save(nova);
     }
 
     public Recomendacao atualizar(UUID id, RecomendacaoRequest request) {
         Recomendacao existente = recomendacaoRepo.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada"));
 
         existente.setTitulo(request.titulo());
         existente.setDescricao(request.descricao());
         existente.setJustificativa(request.justificativa());
         existente.setCategoria(request.categoria());
         existente.setReferencia(request.referencia());
-        
+
         return recomendacaoRepo.save(existente);
     }
 
@@ -65,22 +71,16 @@ public class RecomendacaoService {
         recomendacaoRepo.deleteById(id);
     }
 
-
-    /**
-     * @param id 
-     * @param request 
-     * @param autorEmail 
-     */
     public Recomendacao avaliar(UUID id, AvaliacaoRequest request, String autorEmail) {
         if (request.nota() < 1 || request.nota() > 5) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A nota deve ser entre 1 e 5");
         }
-        
+
         Usuario usuario = usuarioRepo.findByEmail(autorEmail)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado"));
-        
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado"));
+
         Recomendacao recomendacao = recomendacaoRepo.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada"));
 
         Optional<RecomendacaoAvaliacao> avaliacaoExistente = avaliacaoRepo.findByUsuarioAndRecomendacao(usuario, recomendacao);
 
@@ -96,9 +96,8 @@ public class RecomendacaoService {
             avaliacaoParaSalvar.setRecomendacao(recomendacao);
         }
 
-
         recomendacao.setSomaNotas(recomendacao.getSomaNotas() - notaAntiga + request.nota());
-        
+
         if (!avaliacaoExistente.isPresent()) {
             recomendacao.setTotalAvaliacoes(recomendacao.getTotalAvaliacoes() + 1);
         }
@@ -107,5 +106,33 @@ public class RecomendacaoService {
         avaliacaoRepo.save(avaliacaoParaSalvar);
 
         return recomendacaoRepo.save(recomendacao);
+    }
+
+    public RecomendacaoComentario comentar(UUID recomendacaoId, String texto, String autorEmail) {
+        Usuario usuario = usuarioRepo.findByEmail(autorEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado"));
+
+        Recomendacao recomendacao = recomendacaoRepo.findById(recomendacaoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada"));
+
+        RecomendacaoComentario comentario = new RecomendacaoComentario();
+        comentario.setUsuario(usuario);
+        comentario.setRecomendacao(recomendacao);
+        comentario.setTexto(texto);
+
+        return comentarioRepo.save(comentario);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ComentarioResponse> listarComentariosResponse(UUID recomendacaoId) {
+        List<RecomendacaoComentario> comentarios = comentarioRepo.findByRecomendacaoIdOrderByCriadoEmDesc(recomendacaoId);
+        
+        return comentarios.stream().map(c -> new ComentarioResponse(
+            c.getId(),
+            c.getTexto(),
+            c.getUsuario().getNome(),
+            c.getUsuario().getAvatarPath() != null ? "/files/" + c.getUsuario().getAvatarPath() : null,
+            c.getCriadoEm()
+        )).toList();
     }
 }
