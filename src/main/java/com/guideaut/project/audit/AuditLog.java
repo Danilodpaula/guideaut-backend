@@ -7,12 +7,13 @@ import java.util.UUID;
 @Entity
 @Table(name = "audit_logs")
 public class AuditLog {
+
     @Id
     @GeneratedValue
     private UUID id;
 
     @Column(nullable = false)
-    private String evento; // LOGIN_SUCCESS, LOGIN_FAIL, etc.
+    private String evento; // LOGIN_SUCCESS, USER_CREATED, etc.
 
     private String usuarioEmail;
     private String ip;
@@ -23,6 +24,10 @@ public class AuditLog {
 
     @Column(nullable = false)
     private OffsetDateTime timestamp = OffsetDateTime.now();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuditSeverity severity = AuditSeverity.INFO;
 
     // getters/setters
     public UUID getId() {
@@ -75,5 +80,13 @@ public class AuditLog {
 
     public void setTimestamp(OffsetDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public AuditSeverity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(AuditSeverity severity) {
+        this.severity = severity;
     }
 }

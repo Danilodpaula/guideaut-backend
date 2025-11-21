@@ -1,8 +1,12 @@
 package com.guideaut.project.auth;
 
-import com.guideaut.project.auth.dto.*;
+import com.guideaut.project.auth.dto.AuthRequest;
+import com.guideaut.project.auth.dto.AuthResponse;
 import com.guideaut.project.audit.AuditLog;
-import com.guideaut.project.repo.*;
+import com.guideaut.project.audit.AuditSeverity;
+import com.guideaut.project.repo.AuditLogRepo;
+import com.guideaut.project.repo.RefreshTokenRepo;
+import com.guideaut.project.repo.UsuarioRepo;
 import com.guideaut.project.security.JwtService;
 import com.guideaut.project.token.RefreshToken;
 import jakarta.transaction.Transactional;
@@ -20,18 +24,25 @@ import java.util.UUID;
 @Service
 @Transactional
 public class AuthService {
+
     private final UsuarioRepo usuarios;
     private final RefreshTokenRepo refreshRepo;
     private final AuditLogRepo auditRepo;
     private final JwtService jwt;
     private final BCryptPasswordEncoder encoder;
 
-    public AuthService(UsuarioRepo u, RefreshTokenRepo r, AuditLogRepo a, JwtService j, BCryptPasswordEncoder e) {
-        usuarios = u;
-        refreshRepo = r;
-        auditRepo = a;
-        jwt = j;
-        encoder = e;
+    public AuthService(
+            UsuarioRepo u,
+            RefreshTokenRepo r,
+            AuditLogRepo a,
+            JwtService j,
+            BCryptPasswordEncoder e
+    ) {
+        this.usuarios = u;
+        this.refreshRepo = r;
+        this.auditRepo = a;
+        this.jwt = j;
+        this.encoder = e;
     }
 
     public AuthResponse login(AuthRequest req, String ip, String ua) {
@@ -39,12 +50,23 @@ public class AuthService {
                 .orElseThrow(() -> unauthorized("Credenciais inválidas"));
 
         if (!encoder.matches(req.password(), user.getPasswordHash())) {
-            auditRepo.save(audit("LOGIN_FAIL", req.email(), ip, ua, null));
+            // LOGIN_FAILED
+            auditRepo.save(audit(
+                    "LOGIN_FAILED",
+                    req.email(),
+                    ip,
+                    ua,
+                    "Senha inválida",
+                    AuditSeverity.ERROR
+            ));
             throw unauthorized("Credenciais inválidas");
         }
 
         var claims = Map.<String, Object>of(
-                "roles", user.getPapeis().stream().map(p -> p.getNome()).toArray(String[]::new)
+                "roles", user.getPapeis()
+                        .stream()
+                        .map(p -> p.getNome())
+                        .toArray(String[]::new)
         );
 
         String access = jwt.generateAccess(user.getEmail(), claims);
@@ -56,7 +78,16 @@ public class AuthService {
         token.setExpiraEm(OffsetDateTime.now().plusDays(7));
         refreshRepo.save(token);
 
-        auditRepo.save(audit("LOGIN_SUCCESS", user.getEmail(), ip, ua, null));
+        // LOGIN_SUCCESS
+        auditRepo.save(audit(
+                "LOGIN_SUCCESS",
+                user.getEmail(),
+                ip,
+                ua,
+                null,
+                AuditSeverity.INFO
+        ));
+
         return new AuthResponse(access, rawRefresh);
     }
 
@@ -72,7 +103,10 @@ public class AuthService {
 
         var user = token.getUsuario();
         var claims = Map.<String, Object>of(
-                "roles", user.getPapeis().stream().map(p -> p.getNome()).toArray(String[]::new)
+                "roles", user.getPapeis()
+                        .stream()
+                        .map(p -> p.getNome())
+                        .toArray(String[]::new)
         );
         String newAccess = jwt.generateAccess(user.getEmail(), claims);
 
@@ -85,25 +119,58 @@ public class AuthService {
         newToken.setExpiraEm(OffsetDateTime.now().plusDays(7));
         refreshRepo.save(newToken);
 
-        auditRepo.save(audit("REFRESH_SUCCESS", user.getEmail(), null, null, null));
+        // REFRESH_SUCCESS
+        auditRepo.save(audit(
+                "REFRESH_SUCCESS",
+                user.getEmail(),
+                null,
+                null,
+                null,
+                AuditSeverity.INFO
+        ));
+
         return new AuthResponse(newAccess, newRawRefresh);
     }
 
     /** Revoga o refresh informado (logout). */
     public void logout(String rawRefresh) {
-        refreshRepo.findByTokenHash(sha256(rawRefresh)).ifPresent(refreshRepo::delete);
+        refreshRepo.findByTokenHash(sha256(rawRefresh)).ifPresent(token -> {
+            var user = token.getUsuario();
+            String email = user != null ? user.getEmail() : null;
+
+            refreshRepo.delete(token);
+
+            // LOGOUT
+            auditRepo.save(audit(
+                    "LOGOUT",
+                    email,
+                    null,
+                    null,
+                    null,
+                    AuditSeverity.INFO
+            ));
+        });
         // (opcional) revogar todos os refresh do usuário
         // refreshRepo.deleteAllByUsuarioId(...);
     }
 
-    // ----- helpers -----
-    private AuditLog audit(String evt, String email, String ip, String ua, String details) {
+    // ----- helpers de auditoria / segurança -----
+
+    private AuditLog audit(
+            String evt,
+            String email,
+            String ip,
+            String ua,
+            String details,
+            AuditSeverity severity
+    ) {
         var a = new AuditLog();
         a.setEvento(evt);
         a.setUsuarioEmail(email);
         a.setIp(ip);
         a.setUserAgent(ua);
         a.setDetalhesJson(details);
+        a.setSeverity(severity != null ? severity : AuditSeverity.INFO);
         return a;
     }
 
