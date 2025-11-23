@@ -1,7 +1,11 @@
 package com.guideaut.project.artefatos.dto;
 
-import lombok.Data;
+import java.util.List;
+import java.util.UUID;
 
-@Data
-public class UpdateFormDto {
-}
+public record UpdateFormDto (
+        UUID id,
+        String name,
+        String type,
+        List<FormItemDto> items
+) {}

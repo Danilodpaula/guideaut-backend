@@ -1,7 +1,7 @@
 package com.guideaut.project.artefatos.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.Instant;
@@ -9,7 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "personas")
 public class Persona {
@@ -21,6 +24,8 @@ public class Persona {
     private String name;
 
     private Integer age;
+
+    private String gender;
 
     private String language;
 

@@ -1,7 +1,17 @@
 package com.guideaut.project.artefatos.dto;
 
-import lombok.Data;
+import java.util.List;
+import java.util.UUID;
 
-@Data
-public class UpdateEmpathyDto {
-}
+public record UpdateEmpathyDto (
+        UUID id,
+        String name,
+        Integer age,
+        String gender,
+        String reasons,
+        String expectations,
+        List<String> interactionItems,
+        List<String> cognitionItems,
+        List<String> communicationItems,
+        List<String> behaviorItems
+) {}

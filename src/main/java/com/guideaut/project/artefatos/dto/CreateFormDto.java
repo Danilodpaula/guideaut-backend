@@ -1,12 +1,19 @@
 package com.guideaut.project.artefatos.dto;
 
-import lombok.Data;
-import java.util.ArrayList;
+import com.guideaut.project.artefatos.model.Form;
 import java.util.List;
 
-@Data
-public class CreateFormDto {
-    private String name;
-    private String type;
-    private List<FormItemDto> items = new ArrayList<>();
+public record CreateFormDto (
+        String name,
+        String type,
+        List<FormItemDto> items
+)
+{
+    public Form toEntity() {
+        Form form = new Form();
+        form.setName(this.name);
+        form.setType(this.type);
+        form.setItems(this.items.stream().map(FormItemDto::toEntity).toList());
+        return form;
+    }
 }
