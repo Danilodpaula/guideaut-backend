@@ -51,6 +51,6 @@ public class Form {
     public void update(UpdateFormDto dto) {
         this.name = dto.name();
         this.type = dto.type();
-        this.items = dto.items().stream().map(FormItemDto::toEntity).toList();
+        this.items = dto.items().stream().map((i) -> i.toEntity(this)).toList();
     }
 }

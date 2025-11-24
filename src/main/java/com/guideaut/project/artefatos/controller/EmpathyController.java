@@ -21,8 +21,8 @@ public class EmpathyController {
     private EmpathyService service;
 
     @GetMapping("/{id}")
-    public ResponseEntity<FindEmpathyDto> findOne(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.findOne(id));
+    public ResponseEntity<FindEmpathyDto> findOne(@PathVariable String id) {
+        return ResponseEntity.ok(service.findOne(UUID.fromString(id)));
     }
 
     @GetMapping
@@ -36,13 +36,13 @@ public class EmpathyController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<FindEmpathyDto> update(@PathVariable UUID id, @RequestBody UpdateEmpathyDto dto) {
-        return ResponseEntity.ok(service.update(id, dto));
+    public ResponseEntity<FindEmpathyDto> update(@PathVariable String id, @RequestBody UpdateEmpathyDto dto) {
+        return ResponseEntity.ok(service.update(UUID.fromString(id), dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> remove(@PathVariable UUID id) {
-        service.remove(id);
+    public ResponseEntity<Void> remove(@PathVariable String id) {
+        service.remove(UUID.fromString(id));
         return ResponseEntity.noContent().build();
     }
 

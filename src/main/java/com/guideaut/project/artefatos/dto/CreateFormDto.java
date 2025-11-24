@@ -13,7 +13,7 @@ public record CreateFormDto (
         Form form = new Form();
         form.setName(this.name);
         form.setType(this.type);
-        form.setItems(this.items.stream().map(FormItemDto::toEntity).toList());
+        form.setItems(this.items.stream().map((i) -> i.toEntity(form)).toList());
         return form;
     }
 }

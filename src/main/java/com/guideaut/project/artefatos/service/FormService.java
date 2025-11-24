@@ -8,6 +8,8 @@ import com.guideaut.project.artefatos.repository.FormRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -18,12 +20,14 @@ public class FormService {
     @NonNull
     private FormRepository repository;
 
+    @Transactional(readOnly = true)
     public FindFormDto findOne(UUID id) {
         Form form = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Formulário não encontrado!"));
         return form.toDto();
     }
 
+    @Transactional(readOnly = true)
     public List<FindFormDto> findAll() {
         return repository.findAll().stream().map(Form::toDto).toList();
     }

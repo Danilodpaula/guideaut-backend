@@ -106,46 +106,55 @@ public class Persona {
 
         this.comportamento = dto.behavior().stream().map((item) -> {
             PersonaBehavior behavior = new PersonaBehavior();
+            behavior.setPersona(this);
             behavior.setDescription(item);
             return behavior;
         }).toList();
         this.cognicao = dto.cognition().stream().map((item) -> {
             PersonaCognition cognition = new PersonaCognition();
+            cognition.setPersona(this);
             cognition.setDescription(item);
             return cognition;
         }).toList();
         this.comunicacao = dto.communication().stream().map((item) -> {
             PersonaCommunication communication = new PersonaCommunication();
+            communication.setPersona(this);
             communication.setDescription(item);
             return communication;
         }).toList();
         this.interacao = dto.interaction().stream().map((item) -> {
             PersonaInteraction interaction = new PersonaInteraction();
+            interaction.setPersona(this);
             interaction.setDescription(item);
             return interaction;
         }).toList();
         this.calmante = dto.calmingActivities().stream().map((item) -> {
             PersonaCalmingActivity activity = new PersonaCalmingActivity();
+            activity.setPersona(this);
             activity.setDescription(item);
             return activity;
         }).toList();
         this.estereotipo = dto.stereotypes().stream().map((item) -> {
             PersonaStereotype stereotype = new PersonaStereotype();
+            stereotype.setPersona(this);
             stereotype.setDescription(item);
             return stereotype;
         }).toList();
         this.estressante = dto.stressfulActivities().stream().map((item) -> {
             PersonaStressfulActivity activity = new PersonaStressfulActivity();
+            activity.setPersona(this);
             activity.setDescription(item);
             return activity;
         }).toList();
         this.software = dto.softwareAspects().stream().map((item) -> {
             PersonaSoftwareAspect aspect = new PersonaSoftwareAspect();
+            aspect.setPersona(this);
             aspect.setDescription(item);
             return aspect;
         }).toList();
         this.social = dto.socialAspects().stream().map((item) -> {
             PersonaSocialAspect aspect = new PersonaSocialAspect();
+            aspect.setPersona(this);
             aspect.setDescription(item);
             return aspect;
         }).toList();

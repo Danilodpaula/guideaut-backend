@@ -21,8 +21,8 @@ public class PersonaController {
     private PersonaService service;
 
     @GetMapping("/{id}")
-    public ResponseEntity<FindPersonaDto> findOne(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.findOne(id));
+    public ResponseEntity<FindPersonaDto> findOne(@PathVariable String id) {
+        return ResponseEntity.ok(service.findOne(UUID.fromString(id)));
     }
 
     @GetMapping
@@ -36,13 +36,13 @@ public class PersonaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<FindPersonaDto> update(@PathVariable UUID id, @RequestBody UpdatePersonaDto dto) {
-        return ResponseEntity.ok(service.update(id, dto));
+    public ResponseEntity<FindPersonaDto> update(@PathVariable String id, @RequestBody UpdatePersonaDto dto) {
+        return ResponseEntity.ok(service.update(UUID.fromString(id), dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> remove(@PathVariable UUID id) {
-        service.remove(id);
+    public ResponseEntity<Void> remove(@PathVariable String id) {
+        service.remove(UUID.fromString(id));
         return ResponseEntity.noContent().build();
     }
 }

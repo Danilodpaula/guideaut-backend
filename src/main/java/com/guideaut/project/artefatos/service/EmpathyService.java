@@ -8,6 +8,8 @@ import com.guideaut.project.artefatos.repository.EmpathyRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -18,12 +20,14 @@ public class EmpathyService {
     @NonNull
     private EmpathyRepository repository;
 
+    @Transactional(readOnly = true)
     public FindEmpathyDto findOne(UUID id) {
         Empathy empathy = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Empatia não encontrada!"));
         return empathy.toDto();
     }
 
+    @Transactional(readOnly = true)
     public List<FindEmpathyDto> findAll() {
         return repository.findAll().stream().map(Empathy::toDto).toList();
     }
