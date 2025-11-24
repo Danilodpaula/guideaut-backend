@@ -1,43 +1,48 @@
 package com.guideaut.project.artefatos.controller;
 
-import org.springframework.http.MediaType;
+import com.guideaut.project.artefatos.dto.CreateFormDto;
+import com.guideaut.project.artefatos.dto.FindFormDto;
+import com.guideaut.project.artefatos.dto.UpdateFormDto;
+import com.guideaut.project.artefatos.service.FormService;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.UUID;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/form")
 public class FormController {
 
-    @GetMapping("/{id}")
-    public ResponseEntity<String> findOne() {
+    @NonNull
+    private FormService service;
 
-        return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=\"empathy_aut.pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body("ok");
+    @GetMapping("/{id}")
+    public ResponseEntity<FindFormDto> findOne(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.findOne(id));
     }
 
     @GetMapping
-    public ResponseEntity<String> findAll() {
-
-        return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=\"empathy_aut.pdf\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body("ok");
+    public ResponseEntity<List<FindFormDto>> findAll() {
+        return ResponseEntity.ok(service.findAll());
     }
 
     @PostMapping
-    public ResponseEntity<Void> create() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<FindFormDto> create(@RequestBody CreateFormDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<FindFormDto> update(@PathVariable UUID id, @RequestBody UpdateFormDto dto) {
+        return ResponseEntity.ok(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> remove() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> remove(@PathVariable UUID id) {
+        service.remove(id);
+        return ResponseEntity.noContent().build();
     }
 }

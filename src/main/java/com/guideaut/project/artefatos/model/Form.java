@@ -1,5 +1,8 @@
 package com.guideaut.project.artefatos.model;
 
+import com.guideaut.project.artefatos.dto.FindFormDto;
+import com.guideaut.project.artefatos.dto.FormItemDto;
+import com.guideaut.project.artefatos.dto.UpdateFormDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,4 +38,19 @@ public class Form {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    public FindFormDto toDto() {
+        return new FindFormDto(
+                this.id,
+                this.name,
+                this.type,
+                this.items.stream().map((i) -> new FormItemDto(i.getSection(), i.getQuestion())).toList()
+        );
+    }
+
+    public void update(UpdateFormDto dto) {
+        this.name = dto.name();
+        this.type = dto.type();
+        this.items = dto.items().stream().map(FormItemDto::toEntity).toList();
+    }
 }

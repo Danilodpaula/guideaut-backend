@@ -1,10 +1,8 @@
 package com.guideaut.project.artefatos.dto;
 
 import java.util.List;
-import java.util.UUID;
 
 public record UpdateEmpathyDto (
-        UUID id,
         String name,
         Integer age,
         String gender,
