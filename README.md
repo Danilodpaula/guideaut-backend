@@ -33,12 +33,36 @@ API backend do **GuideAut** usando **Spring Boot 3.5.x**, **Java 21**, **JWT** p
 ---
 
 ## Pré-requisitos
-- **Java 21** (Temurin/Adoptium recomendado)
-- **Maven 3.9+**
 
-> Observação: o projeto também inclui o Maven Wrapper (`mvnw`).  
+- **Java 21** instalado (JDK, não só JRE)  
+  > no Ubuntu: `sudo apt install openjdk-21-jdk`
+- **Maven 3.9+** (ou usar o wrapper `./mvnw`)
+- Acesso à porta **8080**
+
+> Observação: o projeto inclui o Maven Wrapper (`mvnw`).  
 > Se preferir usar o Maven instalado no sistema, troque `./mvnw` por `mvn` nos comandos.
+---
 
+### ✅ Verificar versões
+
+Antes de rodar, confira se o ambiente está com as versões corretas:
+
+```bash
+# Versão do Java (tem que ser 21.x)
+java -version
+
+# Compilador Java (tem que existir e ser 21.x também)
+javac -version
+
+# Versão do Maven (3.9+)
+mvn -v
+
+# Se o javac -version não existir, instale o JDK 21:
+
+sudo apt update
+sudo apt install -y openjdk-21-jdk
+
+```
 ---
 
 ## Como rodar (dev)
