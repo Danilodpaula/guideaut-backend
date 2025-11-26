@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@Tag(name = "user-controller")
+@Tag(name = "Usuário")
 public class ProfileController {
 
     private final UsuarioRepo users;
