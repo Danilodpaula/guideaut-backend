@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:guideaut}
+    url: jdbc:h2:mem:guideaut
     driver-class-name: org.h2.Driver
-    username: ${SPRING_DATASOURCE_USERNAME:sa}
-    password: ${SPRING_DATASOURCE_PASSWORD:sa}
+    username: sa
+    password: sa
 
   jpa:
     hibernate:
@@ -19,10 +19,10 @@ spring:
       path: /h2-console
 
   mail:
-    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
-    port: ${SPRING_MAIL_PORT:587}
-    username: ${SPRING_MAIL_USERNAME}
-    password: ${SPRING_MAIL_PASSWORD}
+    host: smtp.gmail.com
+    port: 587
+    username: guideautservice@gmail.com
+    password: fiuybmgxdeqhwslb
     properties:
       mail:
         smtp:
@@ -31,13 +31,13 @@ spring:
             enable: true
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
 
 jwt:
-  secret: ${JWT_SECRET}
-  access-minutes: ${JWT_ACCESS_MINUTES:30}
-  refresh-days: ${JWT_REFRESH_DAYS:7}
+  secret: "j3EIdqonc2QCXV+yyhQ2ItzkhBw9hwx0BCYQegnNoPAu07ZjuVvslalBrzYMuK4Lenpp2+UcqbV1/kHUL1o4Ww=="
+  access-minutes: 30
+  refresh-days: 7
 
 app:
   mail:
-    from: ${APP_MAIL_FROM:guideautservice@gmail.com}
+    from: guideautservice@gmail.com
