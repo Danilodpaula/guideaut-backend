@@ -28,7 +28,6 @@ public class AuditService {
         AuditLog log = new AuditLog();
         log.setEvento(event);
         log.setUsuarioEmail(usuarioEmail);
-        log.setIp(request != null ? request.getRemoteAddr() : null);
         log.setUserAgent(request != null ? request.getHeader("User-Agent") : null);
         log.setTimestamp(OffsetDateTime.now());
         log.setSeverity(severity != null ? severity : AuditSeverity.INFO);
@@ -37,6 +36,7 @@ public class AuditService {
             try {
                 log.setDetalhesJson(objectMapper.writeValueAsString(detalhes));
             } catch (JsonProcessingException e) {
+                // fallback se der erro ao serializar JSON
                 log.setDetalhesJson(String.valueOf(detalhes));
             }
         }

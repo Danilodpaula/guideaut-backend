@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
@@ -39,16 +40,17 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/h2-console/**",
-                    "/files/**"
+                    "/files/**",
+                    "/debug/mail/**"      // 🔓 libera os endpoints de debug de e-mail
                 ).permitAll()
-                
+
                 .requestMatchers(HttpMethod.GET, "/recomendacoes/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                
+
                 .requestMatchers(HttpMethod.POST, "/reports").authenticated()
-                
+
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
