@@ -4,7 +4,10 @@ import com.guideaut.project.audit.AuditService;
 import com.guideaut.project.audit.AuditSeverity;
 import com.guideaut.project.auth.dto.AuthRequest;
 import com.guideaut.project.auth.dto.AuthResponse;
+import com.guideaut.project.auth.dto.ForgotPasswordRequest;
+import com.guideaut.project.auth.dto.ResetPasswordWithCodeRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
+@Tag(name = "Autenticação")
 @RequestMapping("/auth")
 public class AuthController {
 
@@ -106,6 +110,58 @@ public class AuthController {
                         "refreshTokenSnippet", maskToken(req.refreshToken())
                 ),
                 AuditSeverity.INFO
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    // =========================================================
+    // ESQUECI MINHA SENHA / RESET COM CÓDIGO
+    // =========================================================
+
+    @Operation(summary = "Solicitar código de redefinição de senha (esqueci minha senha)")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(
+            @RequestBody ForgotPasswordRequest req,
+            HttpServletRequest r
+    ) {
+        service.requestPasswordReset(
+                req,
+                r.getRemoteAddr(),
+                r.getHeader("User-Agent")
+        );
+
+        // Aqui podemos só logar um evento genérico
+        auditService.log(
+                "FORGOT_PASSWORD_REQUEST",
+                req.email(),
+                r,
+                Map.of("email", req.email()),
+                AuditSeverity.INFO
+        );
+
+        // Sempre 200/204, mesmo se o e-mail não existir
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Redefinir senha usando código enviado por e-mail")
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @RequestBody ResetPasswordWithCodeRequest req,
+            HttpServletRequest r
+    ) {
+        service.resetPasswordWithCode(
+                req,
+                r.getRemoteAddr(),
+                r.getHeader("User-Agent")
+        );
+
+        auditService.log(
+                "PASSWORD_RESET_REQUEST",
+                req.email(),
+                r,
+                Map.of("email", req.email()),
+                AuditSeverity.WARNING
         );
 
         return ResponseEntity.ok().build();

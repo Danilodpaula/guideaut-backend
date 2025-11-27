@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/categorias-recomendacao")
+@RequestMapping("/categorias-recomendacao")
 @AllArgsConstructor
 @Tag(name = "Categorias de Recomendação", description = "Endpoints para gerenciar categorias de recomendações")
 @SecurityRequirement(name = "bearer-jwt")

@@ -16,7 +16,6 @@ public class AuditLog {
     private String evento; // LOGIN_SUCCESS, USER_CREATED, etc.
 
     private String usuarioEmail;
-    private String ip;
     private String userAgent;
 
     @Column(columnDefinition = "TEXT")
@@ -48,14 +47,6 @@ public class AuditLog {
 
     public void setUsuarioEmail(String usuarioEmail) {
         this.usuarioEmail = usuarioEmail;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
     }
 
     public String getUserAgent() {
