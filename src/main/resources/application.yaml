@@ -1,28 +1,17 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:guideaut
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: sa
+  application:
+    name: GuideAutBackend
+  profiles:
+    # Se não informar nada, assume "dev" (seu local com H2)
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
-    open-in-view: false
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
+  # Configuração de Email (Comum, mas senha via variável)
   mail:
     host: smtp.gmail.com
     port: 587
     username: guideautservice@gmail.com
-    password: fiuybmgxdeqhwslb
+    # Em produção, o Render vai preencher isso. Localmente, coloque no application-dev
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -33,9 +22,18 @@ spring:
 server:
   port: 8080
 
+# Configurações do Actuator (Para o Ping Service não dar erro 401/403)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+# Suas configs personalizadas
 jwt:
-  secret: "j3EIdqonc2QCXV+yyhQ2ItzkhBw9hwx0BCYQegnNoPAu07ZjuVvslalBrzYMuK4Lenpp2+UcqbV1/kHUL1o4Ww=="
-  access-minutes: 30
+  # O Render vai injetar isso. Não deixe hardcoded aqui!
+  secret: ${JWT_SECRET}
+  access-minutes: 60
   refresh-days: 7
 
 app:
