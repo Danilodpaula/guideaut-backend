@@ -19,6 +19,7 @@ import java.util.List;
 @SecurityRequirement(name = "bearer-jwt")
 public class CategoriaRecomendacaoController {
     
+    
     private final CategoriaRecomendacaoService service;
     
     @PostMapping

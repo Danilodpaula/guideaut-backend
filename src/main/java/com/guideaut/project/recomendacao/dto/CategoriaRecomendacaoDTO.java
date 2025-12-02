@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CategoriaRecomendacaoDTO {
     
+    
     private Long id;
     private String nome;
     private String descricao;

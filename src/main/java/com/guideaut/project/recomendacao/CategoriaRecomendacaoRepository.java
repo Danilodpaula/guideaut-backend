@@ -8,6 +8,7 @@ import java.util.Optional;
 @Repository
 public interface CategoriaRecomendacaoRepository extends JpaRepository<CategoriaRecomendacao, Long> {
     
+    
     Optional<CategoriaRecomendacao> findByNome(String nome);
     
     boolean existsByNome(String nome);
