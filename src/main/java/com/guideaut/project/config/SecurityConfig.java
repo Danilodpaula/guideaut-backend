@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
@@ -23,35 +24,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  private final JwtAuthFilter jwtAuthFilter;
+    private final JwtAuthFilter jwtAuthFilter;
 
-  @Bean
-  SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
-        .headers(h -> h.frameOptions(f -> f.disable()))
-        .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/auth/**",
-                "/v3/api-docs/**",
-                "/swagger-ui/**",
-                "/swagger-ui.html",
-                "/h2-console/**",
-                "/files/**"
-            ).permitAll()
-            
-            .requestMatchers(HttpMethod.GET, "/recomendacoes/**").permitAll()
-            .requestMatchers(HttpMethod.POST, "/users").permitAll()
-            
-            .requestMatchers("/admin/**").hasRole("ADMIN")
-            .anyRequest().authenticated()
-        )
-        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .headers(h -> h.frameOptions(f -> f.disable()))
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/auth/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/h2-console/**",
+                    "/files/**",
+                    "/debug/mail/**"      // 🔓 libera os endpoints de debug de e-mail
+                ).permitAll()
 
-    return http.build();
-  }
+                .requestMatchers(HttpMethod.GET, "/recomendacoes/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/users").permitAll()
+
+                .requestMatchers(HttpMethod.POST, "/reports").authenticated()
+
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {

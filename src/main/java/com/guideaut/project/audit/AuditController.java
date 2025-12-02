@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/audit")
-@Tag(name = "audit-controller")
+@Tag(name = "Auditória")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasRole('ADMIN')")
 public class AuditController {
@@ -24,7 +24,7 @@ public class AuditController {
         this.repo = repo;
     }
 
-    @Operation(summary = "Listar logs de auditoria")
+    @Operation(summary = "Listar logs de auditoria (ADMIN)")
     @GetMapping("/logs")
     public List<AuditLogResponse> list(
             @RequestParam(required = false) String userEmail,

@@ -2,12 +2,18 @@ package com.guideaut.project.auth;
 
 import com.guideaut.project.auth.dto.AuthRequest;
 import com.guideaut.project.auth.dto.AuthResponse;
+import com.guideaut.project.auth.dto.ForgotPasswordRequest;
+import com.guideaut.project.auth.dto.ResetPasswordWithCodeRequest;
 import com.guideaut.project.audit.AuditLog;
 import com.guideaut.project.audit.AuditSeverity;
+import com.guideaut.project.identity.UserStatus;
+import com.guideaut.project.mail.EmailService;
 import com.guideaut.project.repo.AuditLogRepo;
+import com.guideaut.project.repo.PasswordResetCodeRepo;
 import com.guideaut.project.repo.RefreshTokenRepo;
 import com.guideaut.project.repo.UsuarioRepo;
 import com.guideaut.project.security.JwtService;
+import com.guideaut.project.token.PasswordResetCode;
 import com.guideaut.project.token.RefreshToken;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
@@ -17,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -31,19 +38,30 @@ public class AuthService {
     private final JwtService jwt;
     private final BCryptPasswordEncoder encoder;
 
+    private final PasswordResetCodeRepo passwordResetCodeRepo;
+    private final EmailService emailService;
+
     public AuthService(
             UsuarioRepo u,
             RefreshTokenRepo r,
             AuditLogRepo a,
             JwtService j,
-            BCryptPasswordEncoder e
+            BCryptPasswordEncoder e,
+            PasswordResetCodeRepo passwordResetCodeRepo,
+            EmailService emailService
     ) {
         this.usuarios = u;
         this.refreshRepo = r;
         this.auditRepo = a;
         this.jwt = j;
         this.encoder = e;
+        this.passwordResetCodeRepo = passwordResetCodeRepo;
+        this.emailService = emailService;
     }
+
+    // =========================================================
+    // LOGIN / TOKENS
+    // =========================================================
 
     public AuthResponse login(AuthRequest req, String ip, String ua) {
         var user = usuarios.findByEmail(req.email())
@@ -60,6 +78,22 @@ public class AuthService {
                     AuditSeverity.ERROR
             ));
             throw unauthorized("Credenciais inválidas");
+        }
+
+        // ❗ Bloqueia usuários que não estão ATIVOS
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            auditRepo.save(audit(
+                    "LOGIN_BLOCKED_STATUS",
+                    user.getEmail(),
+                    ip,
+                    ua,
+                    "Status=" + user.getStatus(),
+                    AuditSeverity.WARNING
+            ));
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Usuário não está ativo"
+            );
         }
 
         var claims = Map.<String, Object>of(
@@ -154,7 +188,124 @@ public class AuthService {
         // refreshRepo.deleteAllByUsuarioId(...);
     }
 
-    // ----- helpers de auditoria / segurança -----
+    // =========================================================
+    // FORGOT PASSWORD / RESET COM CÓDIGO
+    // =========================================================
+
+    /**
+     * Esqueci a senha:
+     * - Se o e-mail existir, gera um código de 6 dígitos
+     * - Salva hash do código em PasswordResetCode
+     * - Envia o código por e-mail
+     * - Sempre retorna sucesso (para não vazar se o e-mail existe)
+     */
+    public void requestPasswordReset(ForgotPasswordRequest req, String ip, String ua) {
+        var optUser = usuarios.findByEmail(req.email());
+
+        if (optUser.isEmpty()) {
+            // Não revela que o e-mail não existe
+            auditRepo.save(audit(
+                    "FORGOT_PASSWORD_UNKNOWN_EMAIL",
+                    req.email(),
+                    ip,
+                    ua,
+                    "Email não encontrado",
+                    AuditSeverity.WARNING
+            ));
+            return;
+        }
+
+        var user = optUser.get();
+
+        // Opcional: não mandar reset para usuários não ativos
+        if (user.getStatus() == UserStatus.ARCHIVED) {
+            auditRepo.save(audit(
+                    "FORGOT_PASSWORD_ARCHIVED_USER",
+                    user.getEmail(),
+                    ip,
+                    ua,
+                    "Usuário arquivado",
+                    AuditSeverity.WARNING
+            ));
+            return;
+        }
+
+        // Remove códigos antigos desse usuário
+        passwordResetCodeRepo.deleteAllByUsuario(user);
+
+        // Gera código numérico de 6 dígitos
+        String code = generateNumericCode(6);
+        String codeHash = sha256(code);
+
+        var prc = new PasswordResetCode();
+        prc.setUsuario(user);
+        prc.setCodeHash(codeHash);
+        prc.setExpiraEm(OffsetDateTime.now().plusHours(1));
+        passwordResetCodeRepo.save(prc);
+
+        // Envia o e-mail com o código em texto puro
+        emailService.sendPasswordResetCodeEmail(user.getEmail(), code);
+
+        auditRepo.save(audit(
+                "FORGOT_PASSWORD_CODE_SENT",
+                user.getEmail(),
+                ip,
+                ua,
+                "Código enviado por e-mail",
+                AuditSeverity.INFO
+        ));
+    }
+
+    /**
+     * Redefine a senha usando o código recebido por e-mail.
+     */
+    public void resetPasswordWithCode(ResetPasswordWithCodeRequest req, String ip, String ua) {
+        var user = usuarios.findByEmail(req.email())
+                .orElseThrow(() -> badRequest("Código inválido ou expirado"));
+
+        var optCode = passwordResetCodeRepo
+                .findTopByUsuarioAndUsadoEmIsNullOrderByCriadoEmDesc(user);
+
+        if (optCode.isEmpty()) {
+            throw badRequest("Código inválido ou expirado");
+        }
+
+        var codeEntity = optCode.get();
+
+        if (codeEntity.isExpired()) {
+            // Marca como usado/expirado (opcional) ou deleta
+            passwordResetCodeRepo.delete(codeEntity);
+            throw badRequest("Código inválido ou expirado");
+        }
+
+        String incomingHash = sha256(req.code());
+        if (!incomingHash.equals(codeEntity.getCodeHash())) {
+            throw badRequest("Código inválido ou expirado");
+        }
+
+        // Marca o código como usado
+        codeEntity.setUsadoEm(OffsetDateTime.now());
+        passwordResetCodeRepo.save(codeEntity);
+
+        // Atualiza a senha do usuário
+        user.setPasswordHash(encoder.encode(req.newPassword()));
+        usuarios.save(user);
+
+        // Opcional: revogar tokens de refresh existentes desse usuário aqui
+
+        auditRepo.save(audit(
+                "PASSWORD_RESET_SUCCESS",
+                user.getEmail(),
+                ip,
+                ua,
+                null,
+                AuditSeverity.WARNING
+        ));
+    }
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
 
     private AuditLog audit(
             String evt,
@@ -167,7 +318,6 @@ public class AuthService {
         var a = new AuditLog();
         a.setEvento(evt);
         a.setUsuarioEmail(email);
-        a.setIp(ip);
         a.setUserAgent(ua);
         a.setDetalhesJson(details);
         a.setSeverity(severity != null ? severity : AuditSeverity.INFO);
@@ -188,5 +338,18 @@ public class AuthService {
 
     private ResponseStatusException unauthorized(String msg) {
         return new ResponseStatusException(HttpStatus.UNAUTHORIZED, msg);
+    }
+
+    private ResponseStatusException badRequest(String msg) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, msg);
+    }
+
+    private String generateNumericCode(int length) {
+        SecureRandom rnd = new SecureRandom();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            sb.append(rnd.nextInt(10)); // 0–9
+        }
+        return sb.toString();
     }
 }
