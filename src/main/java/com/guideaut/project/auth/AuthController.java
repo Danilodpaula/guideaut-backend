@@ -1,24 +1,71 @@
 package com.guideaut.project.auth;
 
-import com.guideaut.project.auth.dto.*;
+import com.guideaut.project.audit.AuditService;
+import com.guideaut.project.audit.AuditSeverity;
+import com.guideaut.project.auth.dto.AuthRequest;
+import com.guideaut.project.auth.dto.AuthResponse;
+import com.guideaut.project.auth.dto.ForgotPasswordRequest;
+import com.guideaut.project.auth.dto.ResetPasswordWithCodeRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.Map;
 
 @RestController
+@Tag(name = "Autenticação")
 @RequestMapping("/auth")
 public class AuthController {
-    private final AuthService service;
 
-    public AuthController(AuthService s) {
+    private final AuthService service;
+    private final AuditService auditService;
+
+    public AuthController(AuthService s, AuditService auditService) {
         this.service = s;
+        this.auditService = auditService;
     }
 
     @Operation(summary = "Login (gera access e refresh)")
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest req, HttpServletRequest r) {
-        return ResponseEntity.ok(service.login(req, r.getRemoteAddr(), r.getHeader("User-Agent")));
+    public ResponseEntity<AuthResponse> login(
+            @RequestBody AuthRequest req,
+            HttpServletRequest r
+    ) {
+        try {
+            AuthResponse resp = service.login(
+                    req,
+                    r.getRemoteAddr(),
+                    r.getHeader("User-Agent")
+            );
+
+            // LOGIN_SUCCESS
+            auditService.log(
+                    "LOGIN_SUCCESS",
+                    req.email(), // usuário que tentou logar
+                    r,
+                    Map.of(
+                            "email", req.email()
+                    ),
+                    AuditSeverity.INFO
+            );
+
+            return ResponseEntity.ok(resp);
+        } catch (RuntimeException ex) {
+            // LOGIN_FAILED
+            auditService.log(
+                    "LOGIN_FAILED",
+                    req.email(),
+                    r,
+                    Map.of(
+                            "email", req.email(),
+                            "reason", ex.getMessage()
+                    ),
+                    AuditSeverity.ERROR
+            );
+            throw ex; // deixa o Spring devolver 401/403/500 conforme o AuthService
+        }
     }
 
     // DTO simples para o body de refresh/logout
@@ -26,14 +73,107 @@ public class AuthController {
 
     @Operation(summary = "Troca refresh por novo access (com rotação de refresh)")
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest req) {
-        return ResponseEntity.ok(service.refresh(req.refreshToken()));
+    public ResponseEntity<AuthResponse> refresh(
+            @RequestBody RefreshRequest req,
+            HttpServletRequest r
+    ) {
+        AuthResponse resp = service.refresh(req.refreshToken());
+
+        // REFRESH_TOKEN_USED (sem logar o token inteiro)
+        auditService.log(
+                "REFRESH_TOKEN_ROTATED",
+                null, // se quiser, pode puxar email no AuthService e retornar
+                r,
+                Map.of(
+                        "refreshTokenSnippet", maskToken(req.refreshToken())
+                ),
+                AuditSeverity.INFO
+        );
+
+        return ResponseEntity.ok(resp);
     }
 
     @Operation(summary = "Logout (revoga o refresh informado)")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody RefreshRequest req) {
+    public ResponseEntity<Void> logout(
+            @RequestBody RefreshRequest req,
+            HttpServletRequest r
+    ) {
         service.logout(req.refreshToken());
+
+        // LOGOUT
+        auditService.log(
+                "LOGOUT",
+                null, // se você quiser, pode adaptar AuthService.logout para retornar o e-mail
+                r,
+                Map.of(
+                        "refreshTokenSnippet", maskToken(req.refreshToken())
+                ),
+                AuditSeverity.INFO
+        );
+
         return ResponseEntity.ok().build();
+    }
+
+    // =========================================================
+    // ESQUECI MINHA SENHA / RESET COM CÓDIGO
+    // =========================================================
+
+    @Operation(summary = "Solicitar código de redefinição de senha (esqueci minha senha)")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(
+            @RequestBody ForgotPasswordRequest req,
+            HttpServletRequest r
+    ) {
+        service.requestPasswordReset(
+                req,
+                r.getRemoteAddr(),
+                r.getHeader("User-Agent")
+        );
+
+        // Aqui podemos só logar um evento genérico
+        auditService.log(
+                "FORGOT_PASSWORD_REQUEST",
+                req.email(),
+                r,
+                Map.of("email", req.email()),
+                AuditSeverity.INFO
+        );
+
+        // Sempre 200/204, mesmo se o e-mail não existir
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Redefinir senha usando código enviado por e-mail")
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @RequestBody ResetPasswordWithCodeRequest req,
+            HttpServletRequest r
+    ) {
+        service.resetPasswordWithCode(
+                req,
+                r.getRemoteAddr(),
+                r.getHeader("User-Agent")
+        );
+
+        auditService.log(
+                "PASSWORD_RESET_REQUEST",
+                req.email(),
+                r,
+                Map.of("email", req.email()),
+                AuditSeverity.WARNING
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Evita registrar o refresh token inteiro no log.
+     * Mostra só o início, para debug, sem comprometer segurança.
+     */
+    private String maskToken(String token) {
+        if (token == null) return null;
+        int visible = Math.min(10, token.length());
+        return token.substring(0, visible) + "...";
     }
 }

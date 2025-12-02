@@ -1,9 +1,6 @@
 spring:
-  application:
-    name: guideaut-backend
-
   datasource:
-    url: jdbc:h2:mem:guideaut;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:guideaut
     driver-class-name: org.h2.Driver
     username: sa
     password: sa
@@ -16,16 +13,22 @@ spring:
         format_sql: true
     open-in-view: false
 
-  # security:
-  #   user:
-  #     name: admin
-  #     password: admin123
-  #     roles: ADMIN
-
   h2:
     console:
       enabled: true
       path: /h2-console
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: guideautservice@gmail.com
+    password: fiuybmgxdeqhwslb
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 8080
@@ -34,3 +37,7 @@ jwt:
   secret: "j3EIdqonc2QCXV+yyhQ2ItzkhBw9hwx0BCYQegnNoPAu07ZjuVvslalBrzYMuK4Lenpp2+UcqbV1/kHUL1o4Ww=="
   access-minutes: 30
   refresh-days: 7
+
+app:
+  mail:
+    from: guideautservice@gmail.com
