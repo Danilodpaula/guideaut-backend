@@ -9,10 +9,10 @@ public record CreateEmpathyDto (
      String gender,
      String reasons,
      String expectations,
-     List<String> interactionItems,
-     List<String> cognitionItems,
-     List<String> communicationItems,
-     List<String> behaviorItems
+     List<String> interaction,
+     List<String> cognition,
+     List<String> communication,
+     List<String> behavior
 )
     {
         public Empathy toEntity() {
@@ -22,25 +22,26 @@ public record CreateEmpathyDto (
             empathy.setGender(this.gender);
             empathy.setReasons(this.reasons);
             empathy.setExpectations(this.expectations);
-            empathy.setComportamento(this.behaviorItems.stream().map((item) -> {
+            empathy.setComportamento(this.behavior
+                    .stream().map((item) -> {
                 EmpathyBehavior behavior = new EmpathyBehavior();
                 behavior.setEmpathy(empathy);
                 behavior.setDescription(item);
                 return behavior;
             }).toList());
-            empathy.setCognicao(this.cognitionItems.stream().map((item) -> {
+            empathy.setCognicao(this.cognition.stream().map((item) -> {
                 EmpathyCognition cognition = new EmpathyCognition();
                 cognition.setEmpathy(empathy);
                 cognition.setDescription(item);
                 return cognition;
             }).toList());
-            empathy.setComunicacao(this.communicationItems.stream().map((item) -> {
+            empathy.setComunicacao(this.communication.stream().map((item) -> {
                 EmpathyCommunication communication = new EmpathyCommunication();
                 communication.setEmpathy(empathy);
                 communication.setDescription(item);
                 return communication;
             }).toList());
-            empathy.setInteracao(this.interactionItems.stream().map((item) -> {
+            empathy.setInteracao(this.interaction.stream().map((item) -> {
                 EmpathyInteraction interaction = new EmpathyInteraction();
                 interaction.setEmpathy(empathy);
                 interaction.setDescription(item);
