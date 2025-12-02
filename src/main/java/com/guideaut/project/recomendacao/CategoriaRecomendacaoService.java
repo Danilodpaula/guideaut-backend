@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class CategoriaRecomendacaoService {
     
+    
     private final CategoriaRecomendacaoRepository repository;
     
     @Transactional
