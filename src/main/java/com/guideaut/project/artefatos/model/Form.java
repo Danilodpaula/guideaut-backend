@@ -44,7 +44,7 @@ public class Form {
                 this.id,
                 this.name,
                 this.type,
-                this.items.stream().map((i) -> new FormItemDto(i.getSection(), i.getQuestion())).toList()
+                this.items.stream().map((i) -> new FormItemDto(i.getSection(), i.getIsFixed(), i.getQuestion())).toList()
         );
     }
 

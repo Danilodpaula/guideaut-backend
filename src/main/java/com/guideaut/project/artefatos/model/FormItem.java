@@ -21,6 +21,8 @@ public class FormItem {
 
     private String section;
 
+    private Boolean isFixed;
+
     private String question;
 
     @ManyToOne

@@ -76,25 +76,25 @@ public class Empathy {
         this.gender = dto.gender();
         this.reasons = dto.reasons();
         this.expectations = dto.expectations();
-        this.interacao = dto.interactionItems().stream().map((item) -> {
+        this.interacao = dto.interaction().stream().map((item) -> {
             EmpathyInteraction interaction = new EmpathyInteraction();
             interaction.setEmpathy(this);
             interaction.setDescription(item);
             return interaction;
         }).toList();
-        this.cognicao = dto.cognitionItems().stream().map((item) -> {
+        this.cognicao = dto.cognition().stream().map((item) -> {
             EmpathyCognition cognition = new EmpathyCognition();
             cognition.setEmpathy(this);
             cognition.setDescription(item);
             return cognition;
         }).toList();
-        this.comunicacao = dto.communicationItems().stream().map((item) -> {
+        this.comunicacao = dto.communication().stream().map((item) -> {
             EmpathyCommunication communication = new EmpathyCommunication();
             communication.setEmpathy(this);
             communication.setDescription(item);
             return communication;
         }).toList();
-        this.comportamento = dto.behaviorItems().stream().map((item) -> {
+        this.comportamento = dto.behavior().stream().map((item) -> {
             EmpathyBehavior behavior = new EmpathyBehavior();
             behavior.setEmpathy(this);
             behavior.setDescription(item);
