@@ -96,14 +96,8 @@ public class AuthService {
             );
         }
 
-        var claims = Map.<String, Object>of(
-                "roles", user.getPapeis()
-                        .stream()
-                        .map(p -> p.getNome())
-                        .toArray(String[]::new)
-        );
-
-        String access = jwt.generateAccess(user.getEmail(), claims);
+        // MUDANÇA AQUI: Usa o novo método do JwtService que extrai as roles automaticamente
+        String access = jwt.generateToken(user);
 
         String rawRefresh = UUID.randomUUID().toString();
         var token = new RefreshToken();
@@ -136,13 +130,9 @@ public class AuthService {
         }
 
         var user = token.getUsuario();
-        var claims = Map.<String, Object>of(
-                "roles", user.getPapeis()
-                        .stream()
-                        .map(p -> p.getNome())
-                        .toArray(String[]::new)
-        );
-        String newAccess = jwt.generateAccess(user.getEmail(), claims);
+        
+        // MUDANÇA AQUI TAMBÉM: Usa generateToken(user)
+        String newAccess = jwt.generateToken(user);
 
         // rotação: invalida o antigo e cria outro
         refreshRepo.delete(token);
@@ -184,26 +174,16 @@ public class AuthService {
                     AuditSeverity.INFO
             ));
         });
-        // (opcional) revogar todos os refresh do usuário
-        // refreshRepo.deleteAllByUsuarioId(...);
     }
 
     // =========================================================
     // FORGOT PASSWORD / RESET COM CÓDIGO
     // =========================================================
 
-    /**
-     * Esqueci a senha:
-     * - Se o e-mail existir, gera um código de 6 dígitos
-     * - Salva hash do código em PasswordResetCode
-     * - Envia o código por e-mail
-     * - Sempre retorna sucesso (para não vazar se o e-mail existe)
-     */
     public void requestPasswordReset(ForgotPasswordRequest req, String ip, String ua) {
         var optUser = usuarios.findByEmail(req.email());
 
         if (optUser.isEmpty()) {
-            // Não revela que o e-mail não existe
             auditRepo.save(audit(
                     "FORGOT_PASSWORD_UNKNOWN_EMAIL",
                     req.email(),
@@ -217,7 +197,6 @@ public class AuthService {
 
         var user = optUser.get();
 
-        // Opcional: não mandar reset para usuários não ativos
         if (user.getStatus() == UserStatus.ARCHIVED) {
             auditRepo.save(audit(
                     "FORGOT_PASSWORD_ARCHIVED_USER",
@@ -230,10 +209,8 @@ public class AuthService {
             return;
         }
 
-        // Remove códigos antigos desse usuário
         passwordResetCodeRepo.deleteAllByUsuario(user);
 
-        // Gera código numérico de 6 dígitos
         String code = generateNumericCode(6);
         String codeHash = sha256(code);
 
@@ -243,7 +220,6 @@ public class AuthService {
         prc.setExpiraEm(OffsetDateTime.now().plusHours(1));
         passwordResetCodeRepo.save(prc);
 
-        // Envia o e-mail com o código em texto puro
         emailService.sendPasswordResetCodeEmail(user.getEmail(), code);
 
         auditRepo.save(audit(
@@ -256,9 +232,6 @@ public class AuthService {
         ));
     }
 
-    /**
-     * Redefine a senha usando o código recebido por e-mail.
-     */
     public void resetPasswordWithCode(ResetPasswordWithCodeRequest req, String ip, String ua) {
         var user = usuarios.findByEmail(req.email())
                 .orElseThrow(() -> badRequest("Código inválido ou expirado"));
@@ -273,7 +246,6 @@ public class AuthService {
         var codeEntity = optCode.get();
 
         if (codeEntity.isExpired()) {
-            // Marca como usado/expirado (opcional) ou deleta
             passwordResetCodeRepo.delete(codeEntity);
             throw badRequest("Código inválido ou expirado");
         }
@@ -283,15 +255,11 @@ public class AuthService {
             throw badRequest("Código inválido ou expirado");
         }
 
-        // Marca o código como usado
         codeEntity.setUsadoEm(OffsetDateTime.now());
         passwordResetCodeRepo.save(codeEntity);
 
-        // Atualiza a senha do usuário
         user.setPasswordHash(encoder.encode(req.newPassword()));
         usuarios.save(user);
-
-        // Opcional: revogar tokens de refresh existentes desse usuário aqui
 
         auditRepo.save(audit(
                 "PASSWORD_RESET_SUCCESS",
@@ -348,7 +316,7 @@ public class AuthService {
         SecureRandom rnd = new SecureRandom();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < length; i++) {
-            sb.append(rnd.nextInt(10)); // 0–9
+            sb.append(rnd.nextInt(10));
         }
         return sb.toString();
     }
