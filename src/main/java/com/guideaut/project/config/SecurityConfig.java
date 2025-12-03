@@ -13,7 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService; // Importante
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -30,8 +30,6 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
-    
-    // 1. Injetamos o UserDetailsService (que deve estar implementado no seu projeto)
     private final UserDetailsService userDetailsService;
 
     @Bean
@@ -42,6 +40,7 @@ public class SecurityConfig {
             .headers(h -> h.frameOptions(f -> f.disable()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Rotas Públicas
                 .requestMatchers(
                     "/auth/**",
                     "/v3/api-docs/**",
@@ -53,22 +52,26 @@ public class SecurityConfig {
                 ).permitAll()
 
                 .requestMatchers(HttpMethod.GET, "/recomendacoes/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                .requestMatchers(HttpMethod.POST, "/users").permitAll() // Cadastro público
 
+                // Rotas Protegidas (Requer Login)
                 .requestMatchers(HttpMethod.POST, "/reports").authenticated()
 
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // === ÁREA DO ADMIN ===
+                // MUDANÇA CRUCIAL: .hasAuthority("ADMIN") lê o texto exato do banco.
+                // Se usasse .hasRole, ele procuraria ROLE_ADMIN e falharia.
+                .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/audit/**").hasAuthority("ADMIN")
 
+                // Qualquer outra rota precisa estar logado
                 .anyRequest().authenticated()
             )
-            // Define o provider que usa o banco de dados
-            .authenticationProvider(authenticationProvider()) 
+            .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // 2. Bean que ensina o Spring a buscar no banco e verificar a senha hash
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -77,7 +80,6 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    // 3. Bean necessário para o Controller de Login fazer a autenticação
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
@@ -96,7 +98,8 @@ public class SecurityConfig {
             "http://127.0.0.1:5173",
             "http://localhost:3000",
             "https://guideaut.netlify.app",
-            "https://0432a0b9cb30.ngrok-free.app"
+            // Atualizei para o seu Ngrok atual (se fechar o ngrok, mude aqui de novo)
+            "https://d69acc28334c.ngrok-free.app" 
         ));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
