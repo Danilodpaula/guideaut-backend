@@ -6,7 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j; // <--- O Import Mágico
+import lombok.extern.slf4j.Slf4j; // <--- Importante
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 
 @Component
-@Slf4j // <--- Isso cria o objeto 'log' automaticamente
+@Slf4j // <--- Cria o objeto 'log'
 public class JwtAuthFilter extends OncePerRequestFilter {
 
   private final JwtService jwt;
@@ -43,10 +43,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         Usuario user = usuarios.findByEmail(email).orElse(null);
         
         if (user != null) {
-          // Agora usamos 'log' (minúsculo) do Lombok
-          log.info("AUTH DEBUG -> Usuario encontrado: {}", email);
-          log.info("AUTH DEBUG -> Papeis no banco: {}", user.getPapeis().size());
-          log.info("AUTH DEBUG -> Authorities finais: {}", user.getAuthorities());
+          // Debug
+          log.info("DEBUG AUTH: Usuario encontrado: {}", email);
+          log.info("DEBUG AUTH: Authorities no objeto: {}", user.getAuthorities());
 
           var auth = new UsernamePasswordAuthenticationToken(
               user, 
@@ -57,11 +56,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
           auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
           
           SecurityContextHolder.getContext().setAuthentication(auth);
-        } else {
-            log.warn("AUTH DEBUG -> Usuario nao encontrado no banco: {}", email);
         }
       } catch (Exception e) {
-          log.error("AUTH DEBUG -> Erro ao validar token: {}", e.getMessage());
+          log.error("DEBUG AUTH: Erro token: {}", e.getMessage());
       }
     }
     chain.doFilter(req, res);
