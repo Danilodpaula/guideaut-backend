@@ -15,7 +15,6 @@ public interface AuditLogRepo extends JpaRepository<AuditLog, UUID> {
         SELECT a FROM AuditLog a
         WHERE (:email IS NULL OR a.usuarioEmail = :email)
           AND (:event IS NULL OR a.evento = :event)
-          -- O 'cast' abaixo corrige o erro do Postgres com parâmetros nulos
           AND (cast(:start as timestamp) IS NULL OR a.timestamp >= :start)
           AND (cast(:end as timestamp) IS NULL OR a.timestamp <= :end)
         ORDER BY a.timestamp DESC
