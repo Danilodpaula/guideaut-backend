@@ -5,8 +5,11 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server; // <--- Importante
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class OpenApiConfig {
@@ -16,6 +19,11 @@ public class OpenApiConfig {
         final String securitySchemeName = "bearerAuth";
 
         return new OpenAPI()
+            // AQUI ESTÁ A CORREÇÃO: Força URL relativa
+            // O navegador vai completar com https://d69...ngrok-free.app automaticamente
+            .servers(List.of(
+                new Server().url("/").description("Default Server URL")
+            ))
             .info(new Info()
                 .title("GuideAut API")
                 .version("v1")
@@ -28,7 +36,6 @@ public class OpenApiConfig {
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
                         .bearerFormat("JWT")))
-            // Aplica o esquema de segurança globalmente (cadeado no Swagger)
             .addSecurityItem(new SecurityRequirement().addList(securitySchemeName));
     }
 }
