@@ -6,17 +6,24 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+// REMOVA OS IMPORTS DO SLF4J
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.transaction.annotation.Transactional; // Importante
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+  // REMOVA ESTA LINHA:
+  // private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
+
   private final JwtService jwt;
   private final UsuarioRepo usuarios;
 
@@ -26,7 +33,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
   }
 
   @Override
-  @Transactional // Tenta manter a sessão aberta para carregar lazy/eager
+  @Transactional
   protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
       throws ServletException, IOException {
     
@@ -40,15 +47,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         Usuario user = usuarios.findByEmail(email).orElse(null);
         
         if (user != null) {
-          // FORÇA A LEITURA DAS AUTHORITIES AQUI
-          var authorities = user.getAuthorities(); 
-          
-          // Debug (se puder ver logs): System.out.println("User: " + email + " Roles: " + authorities);
+          // USE 'logger' (que vem da classe pai) em vez do nosso estático
+          // Nota: O logger do Spring é Apache Commons Logging, não SLF4J direto, mas funciona igual.
+          logger.info("Usuario encontrado: " + email); 
+          logger.info("Roles: " + user.getAuthorities());
 
           var auth = new UsernamePasswordAuthenticationToken(
               user, 
               null, 
-              authorities // Passa a lista explicitamente
+              user.getAuthorities() 
           );
           
           auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
@@ -56,7 +63,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
           SecurityContextHolder.getContext().setAuthentication(auth);
         }
       } catch (Exception e) {
-          // Log erro se quiser
+          logger.error("Erro no token: " + e.getMessage());
       }
     }
     chain.doFilter(req, res);
