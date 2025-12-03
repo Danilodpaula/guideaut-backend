@@ -1,5 +1,6 @@
 package com.guideaut.project.security;
 
+import com.guideaut.project.identity.Usuario;
 import com.guideaut.project.repo.UsuarioRepo;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,8 +8,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.transaction.annotation.Transactional; // Importante
 
 import java.io.IOException;
 
@@ -23,8 +26,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
   }
 
   @Override
+  @Transactional // Tenta manter a sessão aberta para carregar lazy/eager
   protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
       throws ServletException, IOException {
+    
     String header = req.getHeader("Authorization");
     
     if (header != null && header.startsWith("Bearer ")) {
@@ -32,23 +37,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         var jws = jwt.parse(header.substring(7));
         String email = jws.getBody().getSubject();
         
-        // Busca o usuário (que já é um UserDetails completo)
-        var user = usuarios.findByEmail(email).orElse(null);
+        Usuario user = usuarios.findByEmail(email).orElse(null);
         
         if (user != null) {
-          // MUDANÇA AQUI:
-          // 1. Passamos o objeto 'user' inteiro (para @AuthenticationPrincipal funcionar no Controller)
-          // 2. Usamos user.getAuthorities() que já traz as roles certas do banco (sem inventar prefixo)
+          // FORÇA A LEITURA DAS AUTHORITIES AQUI
+          var authorities = user.getAuthorities(); 
+          
+          // Debug (se puder ver logs): System.out.println("User: " + email + " Roles: " + authorities);
+
           var auth = new UsernamePasswordAuthenticationToken(
               user, 
               null, 
-              user.getAuthorities() 
+              authorities // Passa a lista explicitamente
           );
+          
+          auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
           
           SecurityContextHolder.getContext().setAuthentication(auth);
         }
-      } catch (Exception ignored) {
-          // Token inválido ou expirado, segue o baile como anônimo
+      } catch (Exception e) {
+          // Log erro se quiser
       }
     }
     chain.doFilter(req, res);
