@@ -66,7 +66,7 @@ public class UserController {
         // ------------------------------------------------------------
         @Operation(summary = "Listar usuários (ADMIN)", description = "Retorna a lista paginada de usuários. Requer papel ADMIN.", security = {
                         @SecurityRequirement(name = "bearerAuth") })
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("hasAuthority('ADMIN')")
         @GetMapping("/admin/users")
         public ResponseEntity<Page<UserResponse>> listUsers(
                         @ParameterObject Pageable pageable,
@@ -135,7 +135,7 @@ public class UserController {
         // ------------------------------------------------------------
         @Operation(summary = "Atualizar status de usuário (ADMIN)", description = "Permite ao administrador mudar status do usuário (PENDING, ACTIVE, BLOCKED, ARCHIVED).", security = {
                         @SecurityRequirement(name = "bearerAuth") })
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("hasAuthority('ADMIN')")
         @PatchMapping("/admin/users/{id}/status")
         public ResponseEntity<UserResponse> updateUserStatus(
                         @PathVariable("id") java.util.UUID id,
@@ -168,7 +168,7 @@ public class UserController {
         // ------------------------------------------------------------
         @Operation(summary = "Atualizar papeis de usuário (ADMIN)", description = "Atualiza completamente o conjunto de papeis do usuário com base nos nomes enviados.", security = {
                         @SecurityRequirement(name = "bearerAuth") })
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("hasAuthority('ADMIN')")
         @PatchMapping("/admin/users/{id}/roles")
         public ResponseEntity<UserResponse> updateUserRoles(
                         @PathVariable("id") java.util.UUID id,
@@ -209,7 +209,7 @@ public class UserController {
         // ------------------------------------------------------------
         @Operation(summary = "Resetar senha de usuário (ADMIN)", description = "Gera uma senha temporária para o usuário e sobrescreve a anterior.", security = {
                         @SecurityRequirement(name = "bearerAuth") })
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("hasAuthority('ADMIN')")
         @PostMapping("/admin/users/{id}/reset-password")
         public ResponseEntity<Void> resetUserPassword(
                         @PathVariable("id") java.util.UUID id,

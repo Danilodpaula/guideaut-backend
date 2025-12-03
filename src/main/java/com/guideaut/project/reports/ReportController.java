@@ -40,14 +40,14 @@ public class ReportController {
     }
 
     @Operation(summary = "Listar todas as denúncias (ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/admin/reports")
     public ResponseEntity<List<ReportResponse>> listAdmin() {
         return ResponseEntity.ok(service.findAll());
     }
 
     @Operation(summary = "Atualizar status da denúncia (ADMIN)")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PatchMapping("/admin/reports/{id}/status")
     public ResponseEntity<Void> updateStatus(
             @PathVariable UUID id,

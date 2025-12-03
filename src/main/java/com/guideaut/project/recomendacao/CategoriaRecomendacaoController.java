@@ -23,7 +23,7 @@ public class CategoriaRecomendacaoController {
     private final CategoriaRecomendacaoService service;
     
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Criar nova categoria de recomendação", description = "Apenas administradores podem criar categorias")
     public ResponseEntity<CategoriaRecomendacaoDTO> criar(@RequestBody CategoriaRecomendacaoDTO dto) {
         CategoriaRecomendacaoDTO criada = service.criar(dto);
@@ -45,7 +45,7 @@ public class CategoriaRecomendacaoController {
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Atualizar categoria", description = "Apenas administradores podem atualizar")
     public ResponseEntity<CategoriaRecomendacaoDTO> atualizar(
             @PathVariable Long id,
@@ -55,7 +55,7 @@ public class CategoriaRecomendacaoController {
     }
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "Deletar categoria", description = "Apenas administradores podem deletar")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         service.deletar(id);
