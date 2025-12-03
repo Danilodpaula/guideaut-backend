@@ -6,9 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-// REMOVA OS IMPORTS DO SLF4J
-// import org.slf4j.Logger;
-// import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j; // <--- O Import Mágico
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,10 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 
 @Component
+@Slf4j // <--- Isso cria o objeto 'log' automaticamente
 public class JwtAuthFilter extends OncePerRequestFilter {
-
-  // REMOVA ESTA LINHA:
-  // private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
 
   private final JwtService jwt;
   private final UsuarioRepo usuarios;
@@ -47,10 +43,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         Usuario user = usuarios.findByEmail(email).orElse(null);
         
         if (user != null) {
-          // USE 'logger' (que vem da classe pai) em vez do nosso estático
-          // Nota: O logger do Spring é Apache Commons Logging, não SLF4J direto, mas funciona igual.
-          logger.info("Usuario encontrado: " + email); 
-          logger.info("Roles: " + user.getAuthorities());
+          // Agora usamos 'log' (minúsculo) do Lombok
+          log.info("AUTH DEBUG -> Usuario encontrado: {}", email);
+          log.info("AUTH DEBUG -> Papeis no banco: {}", user.getPapeis().size());
+          log.info("AUTH DEBUG -> Authorities finais: {}", user.getAuthorities());
 
           var auth = new UsernamePasswordAuthenticationToken(
               user, 
@@ -61,9 +57,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
           auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
           
           SecurityContextHolder.getContext().setAuthentication(auth);
+        } else {
+            log.warn("AUTH DEBUG -> Usuario nao encontrado no banco: {}", email);
         }
       } catch (Exception e) {
-          logger.error("Erro no token: " + e.getMessage());
+          log.error("AUTH DEBUG -> Erro ao validar token: {}", e.getMessage());
       }
     }
     chain.doFilter(req, res);
