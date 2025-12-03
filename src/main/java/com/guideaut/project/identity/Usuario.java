@@ -1,16 +1,22 @@
 package com.guideaut.project.identity;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "usuarios", uniqueConstraints = {
         @UniqueConstraint(name = "uk_usuario_email", columnNames = "email")
 })
-public class Usuario {
+public class Usuario implements UserDetails { // <--- MUDANÇA: Implementa UserDetails
 
     @Id
     @GeneratedValue
@@ -45,7 +51,7 @@ public class Usuario {
     @Column(name = "bio", length = 500)
     private String bio;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER) // EAGER é necessário para carregar permissões no login
     @JoinTable(
             name = "usuario_papel",
             joinColumns = @JoinColumn(name = "usuario_id"),
@@ -61,9 +67,55 @@ public class Usuario {
     )
     private Set<Permissao> permissoesDiretas = new HashSet<>();
 
-    // ===========================
-    // Getters / Setters
-    // ===========================
+    // =================================================================
+    // MÉTODOS OBRIGATÓRIOS DO USER DETAILS (SPRING SECURITY)
+    // =================================================================
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Converte a lista de Papeis (ex: Papel "ADMIN") para SimpleGrantedAuthority (ex: "ROLE_ADMIN")
+        // O Spring precisa disso para saber se pode acessar rotas .hasRole()
+        return papeis.stream()
+                .map(papel -> new SimpleGrantedAuthority(papel.getNome())) 
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public String getPassword() {
+        return this.passwordHash; // Aponta para o campo correto do banco
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email; // O "login" é o email
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        // Se quiser bloquear usuários no futuro, mude lógica aqui
+        return this.status != UserStatus.BLOCKED; 
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // Só permite login se estiver ATIVO (ou ajuste conforme sua regra de negócio)
+        return this.status == UserStatus.ACTIVE;
+    }
+
+    // =================================================================
+    // GETTERS E SETTERS PADRÃO
+    // =================================================================
+
     public UUID getId() {
         return id;
     }
@@ -143,7 +195,6 @@ public class Usuario {
         return permissoesDiretas;
     }
 
-    // Atualiza automaticamente o timestamp de atualização
     @PreUpdate
     public void onUpdate() {
         this.atualizadoEm = OffsetDateTime.now();
