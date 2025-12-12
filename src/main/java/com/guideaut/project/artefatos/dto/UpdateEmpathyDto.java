@@ -8,8 +8,8 @@ public record UpdateEmpathyDto (
         String gender,
         String reasons,
         String expectations,
-        List<String> interactionItems,
-        List<String> cognitionItems,
-        List<String> communicationItems,
-        List<String> behaviorItems
+        List<String> interaction,
+        List<String> cognition,
+        List<String> communication,
+        List<String> behavior
 ) {}
