@@ -33,7 +33,7 @@ public class Usuario implements UserDetails { // <--- MUDANÇA: Implementa UserD
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status = UserStatus.PENDING;
+    private UserStatus status = UserStatus.ACTIVE;
 
     private OffsetDateTime emailVerificadoEm;
     private OffsetDateTime criadoEm = OffsetDateTime.now();
@@ -110,6 +110,13 @@ public class Usuario implements UserDetails { // <--- MUDANÇA: Implementa UserD
     public boolean isEnabled() {
         // Só permite login se estiver ATIVO (ou ajuste conforme sua regra de negócio)
         return this.status == UserStatus.ACTIVE;
+    }
+
+    @PrePersist
+    void ensureDefaultStatus() {
+        if (this.status == null) {
+            this.status = UserStatus.ACTIVE;
+        }
     }
 
     // =================================================================

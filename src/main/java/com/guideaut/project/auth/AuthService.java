@@ -81,7 +81,7 @@ public class AuthService {
         }
 
         // ❗ Bloqueia usuários que não estão ATIVOS
-        if (user.getStatus() != UserStatus.ACTIVE) {
+        if (user.getStatus() == UserStatus.BLOCKED || user.getStatus() == UserStatus.ARCHIVED) {
             auditRepo.save(audit(
                     "LOGIN_BLOCKED_STATUS",
                     user.getEmail(),
@@ -92,7 +92,7 @@ public class AuthService {
             ));
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Usuário não está ativo"
+                    "Usuário não está autorizado para acessar (status=" + user.getStatus() + ")"
             );
         }
 
