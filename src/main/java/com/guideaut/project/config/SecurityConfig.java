@@ -99,7 +99,8 @@ public class SecurityConfig {
             "http://localhost:3000",
             "https://guideaut.netlify.app",
             // Atualizei para o seu Ngrok atual (se fechar o ngrok, mude aqui de novo)
-            "https://d69acc28334c.ngrok-free.app" 
+            // "https://d69acc28334c.ngrok-free.app"
+            "https://56e9fc77950a.ngrok-free.app/" 
         ));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
