@@ -3,6 +3,7 @@ package com.guideaut.project.artefatos.model;
 import com.guideaut.project.artefatos.dto.FindFormDto;
 import com.guideaut.project.artefatos.dto.FormItemDto;
 import com.guideaut.project.artefatos.dto.UpdateFormDto;
+import com.guideaut.project.identity.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -23,6 +24,10 @@ public class Form {
     @Id
     @GeneratedValue
     private UUID id;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private Usuario usuario;
 
     private String name;
 

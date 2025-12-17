@@ -2,6 +2,7 @@ package com.guideaut.project.artefatos.model;
 
 import com.guideaut.project.artefatos.dto.FindPersonaDto;
 import com.guideaut.project.artefatos.dto.UpdatePersonaDto;
+import com.guideaut.project.identity.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,6 +23,10 @@ public class Persona {
     @Id
     @GeneratedValue
     private UUID id;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private Usuario usuario;
 
     private String name;
 
