@@ -8,5 +8,6 @@ public record ComentarioResponse(
     String texto,
     String autorNome,
     String autorAvatar,
-    OffsetDateTime criadoEm
+    OffsetDateTime criadoEm,
+    UUID autorId
 ) {}
