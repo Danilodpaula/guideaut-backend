@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
 
                 .requestMatchers(HttpMethod.POST, "/reports").authenticated()
-
+                .requestMatchers(HttpMethod.DELETE, "/recomendacoes/**").hasRole("ADMIN")
                 .requestMatchers("/admin/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()
