@@ -57,6 +57,13 @@ public class Recomendacao {
 )
     private List<RecomendacaoComentario> comentarios;
 
+    @OneToMany(
+    mappedBy = "recomendacao",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+)
+    private List<RecomendacaoAvaliacao> avaliacoes;
+
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
