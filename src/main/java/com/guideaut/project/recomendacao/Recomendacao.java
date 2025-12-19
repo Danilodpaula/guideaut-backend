@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.guideaut.project.identity.Usuario;
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.UUID;
 import java.time.OffsetDateTime;
 
@@ -48,6 +49,14 @@ public class Recomendacao {
     public UUID getUsuarioId() {
         return usuario != null ? usuario.getId() : null;
     }
+
+    @OneToMany(
+    mappedBy = "recomendacao",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+)
+    private List<RecomendacaoComentario> comentarios;
+
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
