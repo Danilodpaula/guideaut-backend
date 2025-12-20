@@ -92,7 +92,7 @@ public class RecomendacaoService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para deletar esta recomendação.");
         }
 
-        recomendacaoRepo.deleteById(id);
+        recomendacaoRepo.delete(rec);
     }
 
     public Recomendacao avaliar(UUID id, AvaliacaoRequest request, String autorEmail) {
