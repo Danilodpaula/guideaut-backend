@@ -58,7 +58,7 @@ public class RecomendacaoController {
             Authentication authentication,
             HttpServletRequest request
     ) {
-        Recomendacao criada = recomendacaoService.criar(requestBody);
+        Recomendacao criada = recomendacaoService.criar(requestBody, authentication.getName());
 
         auditService.log(
                 "RECOMENDACAO_CREATED",
@@ -82,7 +82,7 @@ public class RecomendacaoController {
             Authentication authentication,
             HttpServletRequest request
     ) {
-        Recomendacao atualizada = recomendacaoService.atualizar(id, requestBody);
+        Recomendacao atualizada = recomendacaoService.atualizar(id, requestBody, authentication.getName());
 
         auditService.log(
                 "RECOMENDACAO_UPDATED",
@@ -105,7 +105,7 @@ public class RecomendacaoController {
             Authentication authentication,
             HttpServletRequest request
     ) {
-        recomendacaoService.deletar(id);
+        recomendacaoService.deletar(id, authentication.getName());
 
         auditService.log(
                 "RECOMENDACAO_DELETED",
@@ -174,7 +174,28 @@ public class RecomendacaoController {
             salvo.getTexto(),
             salvo.getUsuario().getNome(),
             salvo.getUsuario().getAvatarPath() != null ? "/files/" + salvo.getUsuario().getAvatarPath() : null,
-            salvo.getCriadoEm()
+            salvo.getCriadoEm(),
+            salvo.getUsuario().getId()
         ));
+    }
+
+    @Operation(summary = "Deleta um comentário")
+    @DeleteMapping("/{id}/comentarios/{comentarioId}")
+    public ResponseEntity<Void> deletarComentario(
+            @PathVariable UUID id,
+            @PathVariable UUID comentarioId,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        recomendacaoService.deletarComentario(comentarioId, authentication.getName());
+        
+        auditService.log(
+                "COMENTARIO_DELETED",
+                authentication.getName(),
+                request,
+                Map.of("recomendacaoId", id, "comentarioId", comentarioId),
+                AuditSeverity.WARNING
+        );
+        return ResponseEntity.noContent().build();
     }
 }
