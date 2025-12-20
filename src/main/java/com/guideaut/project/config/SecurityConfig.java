@@ -40,7 +40,7 @@ public class SecurityConfig {
             .headers(h -> h.frameOptions(f -> f.disable()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Rotas Públicas
+                // === Rotas Públicas ===
                 .requestMatchers(
                     "/auth/**",
                     "/v3/api-docs/**",
@@ -54,14 +54,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/recomendacoes/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users").permitAll() // Cadastro público
 
-                // Rotas Protegidas (Requer Login)
+                // === Rotas Protegidas (Requer Login) ===
                 .requestMatchers(HttpMethod.POST, "/reports").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/recomendacoes/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                
+                // Deleção permitida para Admin e Usuários donos/comuns (conforme sua lógica de negócio)
+                .requestMatchers(HttpMethod.DELETE, "/recomendacoes/**").hasAnyAuthority("ADMIN", "USER")
 
                 // === ÁREA DO ADMIN ===
-                // MUDANÇA CRUCIAL: .hasAuthority("ADMIN") lê o texto exato do banco.
-                // Se usasse .hasRole, ele procuraria ROLE_ADMIN e falharia.
+                // Usando hasAuthority pois o banco não possui o prefixo ROLE_
                 .requestMatchers("/admin/**").hasAuthority("ADMIN")
                 .requestMatchers("/audit/**").hasAuthority("ADMIN")
 
@@ -100,12 +100,9 @@ public class SecurityConfig {
             "http://localhost:5174",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:5174",
-            "http://localhost:3000"
             "http://localhost:3000",
             "https://guideaut.netlify.app",
-            // Atualizei para o seu Ngrok atual (se fechar o ngrok, mude aqui de novo)
-            // "https://d69acc28334c.ngrok-free.app"
-            "https://56e9fc77950a.ngrok-free.app/" 
+            "https://56e9fc77950a.ngrok-free.app" 
         ));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
