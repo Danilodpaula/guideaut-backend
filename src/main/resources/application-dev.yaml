@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:guideaut
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: sa
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# Se quiser rodar local sem configurar variáveis de ambiente na IDE, 
+# descomente e coloque as senhas reais AQUI (mas não suba pro GitHub se for público):
+# jwt:
+#   secret: "SUA_SENHA_SECRETA_NOVA_AQUI_PARA_TESTE_LOCAL"
+# spring:
+#   mail:
+#     password: "SUA_SENHA_GMAIL_NOVA_AQUI"
