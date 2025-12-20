@@ -1,6 +1,10 @@
 package com.guideaut.project.recomendacao;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.guideaut.project.identity.Usuario;
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.UUID;
 import java.time.OffsetDateTime;
 
@@ -36,6 +40,30 @@ public class Recomendacao {
     @Column(nullable = false)
     private OffsetDateTime criadoEm = OffsetDateTime.now();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    @JsonIgnore
+    private Usuario usuario;
+
+    @JsonProperty("usuarioId")
+    public UUID getUsuarioId() {
+        return usuario != null ? usuario.getId() : null;
+    }
+
+    @OneToMany(
+    mappedBy = "recomendacao",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+)
+    private List<RecomendacaoComentario> comentarios;
+
+    @OneToMany(
+    mappedBy = "recomendacao",
+    cascade = CascadeType.ALL,
+    orphanRemoval = true
+)
+    private List<RecomendacaoAvaliacao> avaliacoes;
+
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -56,4 +84,7 @@ public class Recomendacao {
     public void setSomaNotas(int somaNotas) { this.somaNotas = somaNotas; }
     public int getTotalAvaliacoes() { return totalAvaliacoes; }
     public void setTotalAvaliacoes(int totalAvaliacoes) { this.totalAvaliacoes = totalAvaliacoes; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 }

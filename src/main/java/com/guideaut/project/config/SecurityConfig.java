@@ -56,6 +56,8 @@ public class SecurityConfig {
 
                 // Rotas Protegidas (Requer Login)
                 .requestMatchers(HttpMethod.POST, "/reports").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/recomendacoes/**").hasAnyRole("ADMIN", "USER")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
 
                 // === ÁREA DO ADMIN ===
                 // MUDANÇA CRUCIAL: .hasAuthority("ADMIN") lê o texto exato do banco.
@@ -95,7 +97,10 @@ public class SecurityConfig {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(List.of(
             "http://localhost:5173",
+            "http://localhost:5174",
             "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+            "http://localhost:3000"
             "http://localhost:3000",
             "https://guideaut.netlify.app",
             // Atualizei para o seu Ngrok atual (se fechar o ngrok, mude aqui de novo)

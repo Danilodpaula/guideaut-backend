@@ -17,6 +17,7 @@ public class RecomendacaoComentario {
     private Usuario usuario;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "recomendacao_id", nullable = false)
     private Recomendacao recomendacao;
 
     @Column(columnDefinition = "TEXT", nullable = false)

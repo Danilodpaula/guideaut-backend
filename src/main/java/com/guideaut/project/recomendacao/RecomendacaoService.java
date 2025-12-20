@@ -40,20 +40,34 @@ public class RecomendacaoService {
         return recomendacaoRepo.findAll();
     }
 
-    public Recomendacao criar(RecomendacaoRequest request) {
+    public Recomendacao criar(RecomendacaoRequest request, String emailAutor) {
+        Usuario autor = usuarioRepo.findByEmail(emailAutor)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado"));
+
         Recomendacao nova = new Recomendacao();
         nova.setTitulo(request.titulo());
         nova.setDescricao(request.descricao());
         nova.setJustificativa(request.justificativa());
         nova.setCategoria(request.categoria());
         nova.setReferencia(request.referencia());
+        nova.setUsuario(autor);
 
         return recomendacaoRepo.save(nova);
     }
 
-    public Recomendacao atualizar(UUID id, RecomendacaoRequest request) {
+    public Recomendacao atualizar(UUID id, RecomendacaoRequest request, String emailSolicitante) {
         Recomendacao existente = recomendacaoRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada"));
+
+        Usuario solicitante = usuarioRepo.findByEmail(emailSolicitante)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+        boolean isAdmin = solicitante.getPapeis().stream().anyMatch(p -> p.getNome().equals("ADMIN"));
+        boolean isDono = existente.getUsuario() != null && existente.getUsuario().getId().equals(solicitante.getId());
+
+        if (!isAdmin && !isDono) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para editar esta recomendação.");
+        }
 
         existente.setTitulo(request.titulo());
         existente.setDescricao(request.descricao());
@@ -64,11 +78,21 @@ public class RecomendacaoService {
         return recomendacaoRepo.save(existente);
     }
 
-    public void deletar(UUID id) {
-        if (!recomendacaoRepo.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada");
+    public void deletar(UUID id, String emailSolicitante) {
+        Recomendacao rec = recomendacaoRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recomendação não encontrada"));
+
+        Usuario solicitante = usuarioRepo.findByEmail(emailSolicitante)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+        boolean isAdmin = solicitante.getPapeis().stream().anyMatch(p -> p.getNome().equals("ADMIN"));
+        boolean isDono = rec.getUsuario() != null && rec.getUsuario().getId().equals(solicitante.getId());
+
+        if (!isAdmin && !isDono) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para deletar esta recomendação.");
         }
-        recomendacaoRepo.deleteById(id);
+
+        recomendacaoRepo.delete(rec);
     }
 
     public Recomendacao avaliar(UUID id, AvaliacaoRequest request, String autorEmail) {
@@ -132,7 +156,25 @@ public class RecomendacaoService {
             c.getTexto(),
             c.getUsuario().getNome(),
             c.getUsuario().getAvatarPath() != null ? "/files/" + c.getUsuario().getAvatarPath() : null,
-            c.getCriadoEm()
+            c.getCriadoEm(),
+            c.getUsuario().getId()
         )).toList();
+    }
+
+    public void deletarComentario(UUID comentarioId, String emailSolicitante) {
+        RecomendacaoComentario comentario = comentarioRepo.findById(comentarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comentário não encontrado"));
+
+        Usuario solicitante = usuarioRepo.findByEmail(emailSolicitante)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+        boolean isAdmin = solicitante.getPapeis().stream().anyMatch(p -> p.getNome().equals("ADMIN"));
+        boolean isDono = comentario.getUsuario().getId().equals(solicitante.getId());
+
+        if (!isAdmin && !isDono) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para deletar este comentário");
+        }
+
+        comentarioRepo.delete(comentario);
     }
 }
