@@ -101,8 +101,7 @@ public class SecurityConfig {
             "http://127.0.0.1:5173",
             "http://127.0.0.1:5174",
             "http://localhost:3000",
-            "https://guideaut.netlify.app",
-            "https://56e9fc77950a.ngrok-free.app" 
+            "https://guideaut-est.netlify.app",
         ));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
