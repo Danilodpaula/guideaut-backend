@@ -20,7 +20,8 @@ spring:
             enable: true
 
 server:
-  port: 8080
+  # Render define a porta pela variável PORT; localmente continua 8080
+  port: ${PORT:8080}
   forward-headers-strategy: framework
   tomcat:
     remoteip:

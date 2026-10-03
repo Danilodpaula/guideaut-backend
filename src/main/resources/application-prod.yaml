@@ -5,12 +5,17 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    # Neon suspende o banco após 5 min parado (scale to zero) e derruba as conexões.
+    # max-lifetime < 5 min faz o pool renovar conexões antes de ficarem velhas.
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 0
+      idle-timeout: 60000
+      max-lifetime: 240000
+      connection-timeout: 20000
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update # Cria as tabelas automaticamente
-    properties:
-      hibernate:
-        # SSL é obrigatório no Neon
-        ssl: true
+    # SSL é obrigatório no Neon: use ?sslmode=require no final do DB_URL

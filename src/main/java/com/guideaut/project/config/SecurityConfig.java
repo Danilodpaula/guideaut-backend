@@ -48,7 +48,8 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/h2-console/**",
                     "/files/**",
-                    "/debug/mail/**"
+                    "/actuator/health",   // health check do Render / ping de keep-alive
+                    "/error"              // sem isso, erros (401/404/500) viram 403 sem corpo
                 ).permitAll()
 
                 .requestMatchers(HttpMethod.GET, "/recomendacoes/**").permitAll()
